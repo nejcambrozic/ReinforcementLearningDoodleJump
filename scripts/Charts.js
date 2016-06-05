@@ -13,10 +13,10 @@ window.onload = function () {
       text: "Rezultat - št. iger"
     },
     axisX: {
-      title: "št. iger"
+      title: "lifes"
     },
     axisY: {
-      title: "Rezultat"
+      title: "Score"
     },
     data: [{
       type: "line",
@@ -30,10 +30,10 @@ window.onload = function () {
       text: "Raziskana stanja -št. iger"
     },
     axisX: {
-      title: "št. iger"
+      title: "lifes"
     },
     axisY: {
-      title: "Raziskana stanja"
+      title: "Explored states"
     },
     data: [{
       type: "line",

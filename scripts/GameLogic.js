@@ -14,9 +14,8 @@ var width = 422,
 
 canvas.width = width;
 canvas.height = height;
-
+var saveStore = false;
 var baseHeight = 0;
-
 var gamespeed = 1;
 var draw_flag = 1;
 
@@ -27,16 +26,15 @@ var currentIteration = 1;
 //Variables for game
 var platforms = [],
     image = document.getElementById("sprite"),
-    player, platformCount = 10,
+    player,
+    platformCount = 10, // number of platforms on screen
     position = 0,
-    gravity = 0.2,
+    gravity = 0.2, // define gravity
     animloop,
-    flag = 0,
-    menuloop, broken = 0,
-    dir, score = 0,
+    flag, menuloop, broken, dir, score = 0,
     firstRun = true;
 
-//Base object
+//Base class
 var Base = function() {
     this.height = 5;
     this.width = width;
@@ -62,7 +60,7 @@ var Base = function() {
 
 var base = new Base();
 
-//Player object
+//Player class
 var Player = function() {
     this.vy = 11;
     this.vx = 0;
@@ -85,7 +83,7 @@ var Player = function() {
     this.x = width / 2 - this.width / 2;
     this.y = height;
 
-    //Function to draw it
+    // draw player
     this.draw = function() {
         try {
             if (this.dir == "right") this.cy = 121;
@@ -96,8 +94,6 @@ var Player = function() {
             if (draw_flag){
               ctx.drawImage(image, this.cx, this.cy, this.cwidth, this.cheight, this.x, this.y, this.width, this.height);
             }
-
-
         } catch (e) {}
     };
 
@@ -108,13 +104,11 @@ var Player = function() {
     this.jumpHigh = function() {
         this.vy = -16;
     };
-
 };
 
 player = new Player();
 
-//Platform class
-
+// Platform class
 function Platform() {
     this.width = 70;
     this.height = 17;
@@ -148,17 +142,17 @@ function Platform() {
 
             if (draw_flag){
                 ctx.drawImage(image, this.cx, this.cy, this.cwidth, this.cheight, this.x, this.y, this.width, this.height);
-                //ctx.fillText(this.reward, this.x + 30, this.y + 13);
+                ctx.fillText(this.reward, this.x + 30, this.y + 13);
 
                 // napiše rewarde za posamezno platformo..napiše katera je target
-                // if(this.target){
-                //   ctx.fillText("TARGET", this.x + 20, this.y + 26);
+                 if(this.target){
+                   ctx.fillText("TARGET", this.x + 20, this.y + 26);
                 // //  ctx.fillText("|", platforms[target_platform].x, platforms[target_platform].y);
                 //   ctx.fillText("|", platforms[target_platform].x+platforms[target_platform].width, platforms[target_platform].y);
-                // }
+                }
 
-                ctx.beginPath();
-                ctx.moveTo(p.x + p.width/2, p.y + p.height/2);
+                //ctx.beginPath();
+                //ctx.moveTo(p.x + p.width/2, p.y + p.height/2);
                 // nariše črto do TARGET platforme
                 //ctx.lineTo(player.x + player.width/2, player.y + player.height/2);
 
@@ -193,7 +187,7 @@ function Platform() {
     //Setting the probability of which type of platforms should be shown at what score
     if (score >= 5000) this.types = [2, 3, 3, 3, 4, 4, 4, 4];
     else if (score >= 2000 && score < 5000) this.types = [2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4];
-    else if (score >= 1000 && score < 2000) this.types = [2, 2, 2, 3, 3, 3, 3, 3];
+    else if (score >= 1000 && score < 2000) this.types = [1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3]
     else if (score >= 500 && score < 1000) this.types = [1, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3];
     else if (score >= 100 && score < 500) this.types = [1, 1, 1, 1, 2, 2];
     else this.types = [1];
@@ -243,7 +237,7 @@ var Platform_broken_substitute = function() {
 
 var platform_broken_substitute = new Platform_broken_substitute();
 
-//Spring Class
+// Spring Class
 var spring = function() {
     this.x = 0;
     this.y = 0;
@@ -264,8 +258,8 @@ var spring = function() {
             if (this.state === 0) this.cy = 445;
             else if (this.state == 1) this.cy = 501;
 
-            // if (draw_flag)
-            //     ctx.drawImage(image, this.cx, this.cy, this.cwidth, this.cheight, this.x, this.y, this.width, this.height);
+            if (draw_flag)
+                ctx.drawImage(image, this.cx, this.cy, this.cwidth, this.cheight, this.x, this.y, this.width, this.height);
         } catch (e) {}
     };
 };
@@ -276,11 +270,9 @@ function init() {
     //Variables for the game
     var dir = "left",
         jumpCount = 0;
-
     firstRun = false;
 
-    //Function for clearing canvas in each consecutive frame
-
+    // Clear canvas in each consecutive frame
     function paintCanvas() {
         ctx.clearRect(0, 0, width, height);
     }
@@ -306,69 +298,27 @@ function init() {
             player.x += player.vx;
             player.vx -= 0.15;
             //stop moving if we're above the target platform
-            if (player.x >= platforms[target_platform].x && player.x <= (platforms[target_platform].x + width && platforms[target_platform] > player.y)){
-              player.vx = 0;
-            }
+            // if (player.x >= platforms[target_platform].x && player.x <= (platforms[target_platform].x + width && platforms[target_platform] > player.y)){
+            //   player.vx = 0;
+            // }
         } else {
             player.x += player.vx;
             if (player.vx < 0) player.vx += 0.1;
         }
-        //////
-
+        
         if (direction(target_platform) == "right") {
             player.x += player.vx;
             player.vx += 0.15;
             //stop moving in x direction if we are above the target platform
-            if (player.x >= platforms[target_platform].x && player.x <= (platforms[target_platform].x + width && platforms[target_platform] > player.y)){
-              player.vx = 0;
-            }
+            // if (player.x >= platforms[target_platform].x && player.x <= (platforms[target_platform].x + width && platforms[target_platform] > player.y)){
+            //   player.vx = 0;
+            // }
         } else {
             player.x += player.vx;
             if (player.vx > 0) player.vx -= 0.1;
         }
 
-
-        // if (dir == "left") {
-        //   player.dir = "left";
-        //   if (player.vy < -7 && player.vy > -15) player.dir = "left_land";
-        // } else if (dir == "right") {
-        //   player.dir = "right";
-        //   if (player.vy < -7 && player.vy > -15) player.dir = "right_land";
-        // }
-
-        //Adding keyboard controls
-        // document.onkeydown = function(e) {
-        //     var key = e.keyCode;
-
-        //     if (key == 37) {
-        //         dir = "left";
-        //         player.isMovingLeft = true;
-        //     } else if (key == 39) {
-        //         dir = "right";
-        //         player.isMovingRight = true;
-        //     }
-
-        //     if (key == 32) {
-        //         if (firstRun === true)
-        //             init();
-        //         else
-        //             reset();
-        //     }
-        // };
-
-        // document.onkeyup = function(e) {
-        //     var key = e.keyCode;
-
-        //     if (key == 37) {
-        //         dir = "left";
-        //         player.isMovingLeft = false;
-        //     } else if (key == 39) {
-        //         dir = "right";
-        //         player.isMovingRight = false;
-        //     }
-        // };
-
-        //Accelerations produces when the user hold the keys
+        // Accelerations produces when the user hold the keys
         if (player.isMovingLeft === true) {
             player.x += player.vx;
             player.vx -= 0.15;
@@ -385,13 +335,11 @@ function init() {
             if (player.vx > 0) player.vx -= 0.1;
         }
 
-        // // Speed limits!
+        // Speed limits!
         if (player.vx > 8)
             player.vx = 8;
         else if (player.vx < -8)
             player.vx = -8;
-
-        //console.log(player.vx);
 
         //Jump the player when it hits the base
         if ((player.y + player.height) > base.y && base.y < height) player.jump();
@@ -539,26 +487,20 @@ function init() {
 
     function gameOver() {
         decide();
-        // platforms.forEach(function(p, i) {
-        //     p.y -= 12;
-        // });
+        platforms.forEach(function(p, i) {
+            p.y -= 12;
+        });
 
-        // if (player.y > height / 2 && flag === 0) {
-        //     player.y -= 8;
-        //     player.vy = 0;
-        // } else if (player.y < height / 2) flag = 1;
-        // else if (player.y + player.height > height) {
-        //     showGoMenu();
-        //     hideScore();
-        //     player.isDead = "lol";
+        if (player.y > height / 2 && flag === 0) {
+            player.y -= 8;
+            player.vy = 0;
+        } else if (player.y < height / 2) flag = 1;
+        else if (player.y + player.height > height) {
+            showGoMenu();
+            hideScore();
+            player.isDead = "lol";
 
-        //     var tweet = document.getElementById("tweetBtn");
-        //     tweet.href = 'http://twitter.com/share?url=http://is.gd/PnFFzu&text=I just scored ' + score + ' points in the HTML5 Doodle Jump game!&count=horiztonal&via=cssdeck&related=solitarydesigns';
-
-        //     var facebook = document.getElementById("fbBtn");
-        //     facebook.href = 'http://facebook.com/sharer.php?s=100&p[url]=http://cssdeck.com/labs/html5-doodle-jump/8&p[title]=I just scored ' + score + ' points in the HTML5 Doodle Jump game!&p[summary]=Can you beat me in this awesome recreation of Doodle Jump created in HTML5?';
-
-        // }
+        }
     }
 
     //Function to update everything
@@ -596,14 +538,16 @@ scores = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
 function reset() {
     // record iteration and score for graphing library
+
     scores[currentIteration % 11] = score;
+
     average = (scores[0] + scores[1] + scores[2] + scores[3] + scores[4] + scores[5] + scores[6] + scores[7] + scores[8] + scores[9]) / 10;
     //sorted = scores.sort(function(a,b){return a-b;});
     //console.log(sorted);
     //median = sorted[5];
     //max = sorted[10];
-    if (currentIteration % 10 == 0) {
-        ScorePerLifeChartDPS.push({
+    //if (currentIteration % 20 == 0) {
+          ScorePerLifeChartDPS.push({
             x: currentIteration,
             y: average
         });
@@ -612,10 +556,10 @@ function reset() {
             y: brain.explored
         });
         updateChart();
-        store.set('brain', brain);
+        if(saveStore) store.set('brain', brain);
 
-    }
-    hideGoMenu();
+    //}
+    //hideGoMenu();
     showScore();
     player.isDead = false;
 
@@ -654,13 +598,6 @@ function showGoMenu() {
 
     var scoreText = document.getElementById("go_score");
     scoreText.innerHTML = "You scored " + score + " points!";
-}
-
-//Hides the game over menu
-function hideGoMenu() {
-    var menu = document.getElementById("gameOverMenu");
-    menu.style.zIndex = -1;
-    menu.style.visibility = "hidden";
 }
 
 //Show ScoreBoard
@@ -775,7 +712,8 @@ menuLoop();
 
 window.onbeforeunload = function (event) {
     //save the master brain to disk before exiting
-    store.set('brain', brain);
+    
+    if(saveStore) store.set('brain', brain);
 
     var message = 'Are you sure you wish to stop running this algorithm?';
     if (typeof event == 'undefined') {
@@ -787,3 +725,8 @@ window.onbeforeunload = function (event) {
     return message;
 
 };
+
+function saveBrain(){
+    store.set('brain', brain);
+    console.log("Brained stored");
+}
