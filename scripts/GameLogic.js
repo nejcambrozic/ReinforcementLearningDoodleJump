@@ -30,8 +30,12 @@ var platforms = [],
     platformCount = 10, // number of platforms on screen
     position = 0,
     gravity = 0.2, // define gravity
-    animloop,
-    flag, menuloop, broken, dir, score = 0,
+    animloop = 0,
+    flag = 0,
+    menuloop = 0,
+    broken = 0,
+    dir = 0,
+    score = 0,
     firstRun = true;
 
 //Base class
@@ -187,7 +191,7 @@ function Platform() {
     //Setting the probability of which type of platforms should be shown at what score
     if (score >= 5000) this.types = [2, 3, 3, 3, 4, 4, 4, 4];
     else if (score >= 2000 && score < 5000) this.types = [2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4];
-    else if (score >= 1000 && score < 2000) this.types = [1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3]
+    else if (score >= 1000 && score < 2000) this.types = [2, 2, 2, 3, 3, 3, 3, 3];
     else if (score >= 500 && score < 1000) this.types = [1, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3];
     else if (score >= 100 && score < 500) this.types = [1, 1, 1, 1, 2, 2];
     else this.types = [1];
@@ -198,7 +202,7 @@ function Platform() {
     if (this.type == 3 && broken < 1) {
         broken++;
     } else if (this.type == 3 && broken >= 1) {
-        this.type = 1;
+        this.type = Math.random()<0.5? 1 : 2;
         broken = 0;
     }
 
@@ -360,16 +364,14 @@ function init() {
         //When the player reaches half height, move the platforms to create the illusion of scrolling and recreate the platforms that are out of viewport...
         else {
             platforms.forEach(function(p, i) {
-
-                if (player.vy < 0) {
+              
+                if (player.vy < 0) 
                     p.y -= player.vy;
-                }
-
+                
                 if (p.y > height) {
                     platforms[i] = new Platform();
                     platforms[i].y = p.y - height;
                 }
-
             });
 
             base.y -= player.vy;
@@ -380,10 +382,9 @@ function init() {
                 player.vy += gravity;
             }
 
-            if (base.y > baseHeight) {
+            if (base.y > baseHeight)
                 score++;
-            }
-
+            
             baseHeight = Math.max(base.y, baseHeight);
         }
 
@@ -633,42 +634,38 @@ function playerJump() {
     }
 
     //Adding keyboard controls
-    document.onkeydown = function(e) {
-        var key = e.keyCode;
+    // document.onkeydown = function(e) {
+    //     var key = e.keyCode;
 
-        if (key == 37) {
-            dir = "left";
-            player.isMovingLeft = true;
-        } else if (key == 39) {
-            dir = "right";
-            player.isMovingRight = true;
-        }
+    //     if (key == 37) {
+    //         dir = "left";
+    //         player.isMovingLeft = true;
+    //     } else if (key == 39) {
+    //         dir = "right";
+    //         player.isMovingRight = true;
+    //     }
 
-        if (key == 32) {
-            if (firstRun === true) {
-                init();
-                firstRun = false;
-            } else
-                reset();
-        }
+    //     if (key == 32) {
+    //         if (firstRun === true) {
+    //             init();
+    //             firstRun = false;
+    //         } else
+    //             reset();
+    //     }
+    // };
 
+    // document.onkeyup = function(e) {
+    //     var key = e.keyCode;
 
+    //     if (key == 37) {
+    //         dir = "left";
+    //         player.isMovingLeft = false;
+    //     } else if (key == 39) {
+    //         dir = "right";
+    //         player.isMovingRight = false;
+    //     }
 
-
-    };
-
-    document.onkeyup = function(e) {
-        var key = e.keyCode;
-
-        if (key == 37) {
-            dir = "left";
-            player.isMovingLeft = false;
-        } else if (key == 39) {
-            dir = "right";
-            player.isMovingRight = false;
-        }
-
-    };
+    // };
 
     //Accelerations produces when the user hold the keys
     if (player.isMovingLeft === true) {

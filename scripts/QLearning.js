@@ -64,8 +64,8 @@ var brain = new Q_model();
 //   console.log('States explored:' + brain.explored);
 // }
 
-const ydivision = 10, // round the y distance to the nearest ydivision
-    xdivision = 10;
+const ydivision = 1, // round the y distance to the nearest ydivision
+    xdivision = 1;
 var previous_score = 0;
 var previous_collision = -1; // how does this happen sometimes // the genie did it se c LLEOMLME L OLA DLOL OLOLOLOL
 
