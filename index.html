@@ -1,62 +1,57 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Q Learning and Doodle Jump</title>
+    <title>Doodle Jump : Reinforcement Learning</title>
     <link rel="stylesheet" href="style.css">
-    <script type="text/javascript" src="scripts/canvasjs/canvasjs.min.js"></script>
-    <script type="text/javascript" src="scripts/Charts.js"></script>
+    <!-- Load libraries -->
+    <script type="text/javascript" src="libs/canvasjs/canvasjs.min.js"></script> <!-- Use HTML% canvas lib -->
+    <script type="text/javascript" src="scripts/Charts.js"></script> <!-- Charts -->
+    <script src="libs/storage.js"></script> <!-- Store brain to localStorage -->
   </head>
-  <body>
+  
+  <body>  
+    <!-- Display charts -->
     <div>
-      <div>
-        <div id="chartScorePerLifeContainer" style="height: 300px; width: 45%; display: inline-block;">  </div>
-        <div id="chart2" style="height: 300px; width: 45%; display: inline-block;">  </div>
+      <div id="chartScorePerLifeContainer" style="height: 300px; width: 45%; display: inline-block;">  </div>
+      <div id="ExploredStatesChartContainer" style="height: 300px; width: 45%; display: inline-block;">  </div>
+    </div>
+    <!-- gamespeed, draw, save brain controls -->
+    <div>
+        <label>Game Speed</label>
+        <input type="range" id="gamespeed" min="0" max="100" value="0" onchange="setGamespeed(this.value);">
+        <input type="text" value="0" id="gamespeedVal" size="2" onchange="setGamespeed(this.value)">
+        <!-- Toogle draw => use when using high gamespeed -->
+        <input type="button" value="Paint" onclick="toggleDraw()" />
+        <!-- Manually save learned brain to localStorage -->
+        <input type="button" Value="Save Brain" onclick="saveBrain()" style="right: 0; position: fixed" />
+
+    </div>
+    <div class="container">
+      <canvas id="canvas" class="doodle_jump">
+        <!-- Paint doodle jump -->
+      </canvas>
+
+      <!-- Start menu -->
+      <div id="mainMenu">
+        <p class="info">
+          Press play to start with reinforcement learing
+        </p>
+        <a class="button" href="javascript:init()">Play</a>
       </div>
-      <div>
-          Game Speed
-      </div>
-      <div>
-          <input type="range" id="gamespeed" min="0" max="100" value="0" onchange="setGamespeed(this.value);">
-          <input type="text" value="0" id="gamespeedVal" size="2" onchange="setGamespeed(this.value)">
 
-          <input type="button" value="Draw Switch" onclick="javascript: if(draw_flag == 0) { draw_flag = 1;} else { draw_flag = 0;}" />
-          <span onclick="saveBrain()">save brain</span>
-
-      </div>
-      <div class="container">
-
-        <canvas id="canvas" class="doodle_jump">
-          no HTML5 support
-        </canvas>
-
-        <div id="mainMenu">
-          <h1>Doodle jump</h1>
-
-          <p class="info">
-            Play to start
-          </p>
-          <a class="button" href="javascript:init()">Play</a>
-        </div>
-
-        <!--<div id="gameOverMenu">
-          <h1>game over!</h1>
-          <h3 id="go_score">you scored 0 points</h3>
-        </div>-->
-
-        <!-- Preloading image ;) -->
-        <img id="sprite" src="images/2WEhF.png"/>
-
-        <div id="scoreBoard">
-          <p id="score">0</p>
-        </div>
-
+      <!-- Preloading background image -->
+      <img id="sprite" src="images/2WEhF.png"/>
+      <!-- Display score -->
+      <div id="scoreBoard">
+        <p id="score">0</p>
       </div>
     </div>
+    
+    <!-- Load scripts -->
 
-    <script src="scripts/Storage.js"></script>
-    <script src="scripts/QLearning.js"></script>
-    <script src="scripts/GameLogic.js"></script>
+    <script src="scripts/QLearning.js"></script> <!-- QLearning algorithm implementation -->
+    <script src="scripts/DoodleJump.js"></script> <!-- Game and player behaviour ingame -->
 
   </body>
 </html>

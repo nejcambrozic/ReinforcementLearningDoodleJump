@@ -1,17 +1,6 @@
-/* latin */
-@font-face {
-  font-family: 'Gloria Hallelujah';
-  font-style: normal;
-  font-weight: 400;
-  src: local('Gloria Hallelujah'), local('GloriaHallelujah'), url(fonts/font.woff2) format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215, U+E0FF, U+EFFD, U+F000;
-}
-
-*{box-sizing: border-box;}
-
 body {
-  margin: 0; padding: 0;
-  font-family: 'Gloria Hallelujah', cursive;
+  margin: 0;
+  padding: 0;
 }
 
 .container {
@@ -21,6 +10,8 @@ body {
   margin: 20px auto 0; 
   overflow: hidden;
 }
+
+*{box-sizing: border-box;}
 
 canvas.doodle_jump {
   height: 552px;
@@ -49,7 +40,7 @@ canvas.doodle_jump {
 
 img {display: none}
 
-#mainMenu, #gameOverMenu {
+#mainMenu {
   height: 100%;
   width: 100%;
   text-align: center;
@@ -57,10 +48,6 @@ img {display: none}
   top: 0;
   left: 0;
   z-index: 2;
-}
-
-#gameOverMenu {
-  visibility: hidden;
 }
 
 h2, h3, h1 {font-weight: normal}
@@ -71,7 +58,10 @@ h1 {
   margin: 0px;
 }
 
-h3 {text-align: right; margin: -10px 20px 0 0; color: #5e96be}
+h3 {
+  text-align: right; 
+  margin: -10px 20px 0 0; 
+  color: #5e96be}
 h3 a {color: #5a5816}
 
 .button {
@@ -89,18 +79,10 @@ h3 a {color: #5a5816}
   margin-left: -53px;
 }
 
-.button.tweet {bottom: 100px; background-position: 0 -90px}
-.button.fb {bottom: 150px; background-position: 0 -60px}
-
-.info {position: absolute; right: 20px; bottom: 00px; margin: 0; color: green}
-
-.info .key {
-  width: 16px;
-  height: 16px;
-  background: url(images/2WEhF.png) no-repeat;
-  text-indent: -9999px;
-  display: inline-block;
+.info {
+  position: absolute; 
+  right: 20px;
+  bottom: 00px; 
+  margin: 0; 
+  color: green
 }
-
-.info .key.left {background-position: -92px -621px;}
-.info .key.right {background-position: -92px -641px;}

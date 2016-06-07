@@ -9,35 +9,37 @@ window.requestAnimFrame = (function() {
 var canvas = document.getElementById('canvas'),
     ctx = canvas.getContext('2d');
 
-var width = 422,
+// As required by Doodle Jump
+const width = 422,
     height = 552;
 
 canvas.width = width;
 canvas.height = height;
-var saveStore = false;
-var baseHeight = 0;
-var gamespeed = 1;
-var draw_flag = 1;
 
-
-// Used to define current iteration for graphing library
-var currentIteration = 1;
-
-//Variables for game
-var platforms = [],
-    image = document.getElementById("sprite"),
-    player,
+// Define global variables
+var saveStore = false, // do save brain automaticly?
+    baseHeight = 0,
+    gameSpeed = 1, // default gamespeed
+    draw_flag = true, // do draw doodle?
+    currIter = 1; // Used to define current iteration for graphing library
+    platforms = [], // Variables for game
+    image = document.getElementById("sprite"), // background image
+    player, // player
     platformCount = 10, // number of platforms on screen
-    position = 0,
+    position = 0, //
     gravity = 0.2, // define gravity
     animloop = 0,
     flag = 0,
-    menuloop = 0,
+    menuloop = null,
     broken = 0,
     dir = 0,
     score = 0,
-    firstRun = true;
+    firstRun = true,
+    scores = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; // Global scores used for calculating average of last 10 runs
 
+/**
+ * Class definitions
+ */
 //Base class
 var Base = function() {
     this.height = 5;
@@ -61,9 +63,6 @@ var Base = function() {
         } catch (e) {}
     };
 };
-
-var base = new Base();
-
 //Player class
 var Player = function() {
     this.vy = 11;
@@ -109,9 +108,6 @@ var Player = function() {
         this.vy = -16;
     };
 };
-
-player = new Player();
-
 // Platform class
 function Platform() {
     this.width = 70;
@@ -149,36 +145,11 @@ function Platform() {
                 ctx.fillText(this.reward, this.x + 30, this.y + 13);
 
                 // napiše rewarde za posamezno platformo..napiše katera je target
-                 if(this.target){
-                   ctx.fillText("TARGET", this.x + 20, this.y + 26);
-                // //  ctx.fillText("|", platforms[target_platform].x, platforms[target_platform].y);
-                //   ctx.fillText("|", platforms[target_platform].x+platforms[target_platform].width, platforms[target_platform].y);
+                if(this.target){
+                    ctx.fillText(direction(platforms.indexOf(this)).toUpperCase(), this.x + 20, this.y);
                 }
-
-                //ctx.beginPath();
-                //ctx.moveTo(p.x + p.width/2, p.y + p.height/2);
                 // nariše črto do TARGET platforme
                 //ctx.lineTo(player.x + player.width/2, player.y + player.height/2);
-
-                // if(this.target) {
-                //   ctx.strokeStyle = "black";
-                //   ctx.lineWidth = 1;
-                //   ctx.fillText("["  + states[i][2] + "," + states[i][1] + "," + states[i][0] + "]",
-                //   (p.x + p.width/2 + player.x + player.width/2) /2, (p.y + p.height/2 + player.y + player.height/2)/2);
-                // }
-                // // else if(this.reward < 0) {
-                //   ctx.strokeStyle = "red";
-                //   ctx.lineWidth = 1;
-                // }
-                // else {
-                //   ctx.strokeStyle = "black";
-                //   ctx.lineWidth = 1;
-                // }
-
-                ctx.stroke();
-
-
-
               }
         } catch (e) {}
     };
@@ -196,9 +167,10 @@ function Platform() {
     else if (score >= 100 && score < 500) this.types = [1, 1, 1, 1, 2, 2];
     else this.types = [1];
 
+    // Selet random type
     this.type = this.types[Math.floor(Math.random() * this.types.length)];
 
-    //We can't have two consecutive breakable platforms otherwise it will be impossible to reach another platform sometimes!
+    // We can't have two breakable platforms in a row or it is impossible to go forward
     if (this.type == 3 && broken < 1) {
         broken++;
     } else if (this.type == 3 && broken >= 1) {
@@ -208,12 +180,7 @@ function Platform() {
 
     this.moved = 0;
     this.vx = 1;
-}
-
-for (var i = 0; i < platformCount; i++) {
-    platforms.push(new Platform());
-}
-
+};
 //Broken platform object
 var Platform_broken_substitute = function() {
     this.height = 30;
@@ -238,10 +205,7 @@ var Platform_broken_substitute = function() {
         } catch (e) {}
     };
 };
-
-var platform_broken_substitute = new Platform_broken_substitute();
-
-// Spring Class
+// Spring Class (jumping)
 var spring = function() {
     this.x = 0;
     this.y = 0;
@@ -267,14 +231,25 @@ var spring = function() {
         } catch (e) {}
     };
 };
+// ---- End Class definitions
 
+
+// Crete instances; need to be global
+var player = new Player();
+var base = new Base();
+// Create first platforms
+for (var i = 0; i < platformCount; i++) {
+    platforms.push(new Platform());
+}
+var platform_broken_substitute = new Platform_broken_substitute();
 var Spring = new spring();
 
+// Start the game
 function init() {
     //Variables for the game
     var dir = "left",
         jumpCount = 0;
-    firstRun = false;
+        firstRun = false;
 
     // Clear canvas in each consecutive frame
     function paintCanvas() {
@@ -283,8 +258,7 @@ function init() {
 
     decision = -39; // the point at which a prediction is made
     function playerCalc() {
-        // When the player is almost at the top of the arc, predict where to go
-        // Brez decide() se igralec ne premakne
+        // When the player is almost at the top of the arc, decide where to go
         if (Math.round(player.vy * 5) == decision) // scale to reduce number of calls to one per jump
             decide();
 
@@ -301,10 +275,6 @@ function init() {
         if (direction(target_platform) == "left") {
             player.x += player.vx;
             player.vx -= 0.15;
-            //stop moving if we're above the target platform
-            // if (player.x >= platforms[target_platform].x && player.x <= (platforms[target_platform].x + width && platforms[target_platform] > player.y)){
-            //   player.vx = 0;
-            // }
         } else {
             player.x += player.vx;
             if (player.vx < 0) player.vx += 0.1;
@@ -313,43 +283,31 @@ function init() {
         if (direction(target_platform) == "right") {
             player.x += player.vx;
             player.vx += 0.15;
-            //stop moving in x direction if we are above the target platform
-            // if (player.x >= platforms[target_platform].x && player.x <= (platforms[target_platform].x + width && platforms[target_platform] > player.y)){
-            //   player.vx = 0;
-            // }
         } else {
             player.x += player.vx;
             if (player.vx > 0) player.vx -= 0.1;
         }
 
         // Accelerations produces when the user hold the keys
-        if (player.isMovingLeft === true) {
-            player.x += player.vx;
-            player.vx -= 0.15;
-        } else {
-            player.x += player.vx;
-            if (player.vx < 0) player.vx += 0.1;
-        }
-
-        if (player.isMovingRight === true) {
-            player.x += player.vx;
-            player.vx += 0.15;
-        } else {
-            player.x += player.vx;
-            if (player.vx > 0) player.vx -= 0.1;
-        }
+    
+        player.x += player.vx;
+        if (player.vx < 0) player.vx += 0.1;
+        else if (player.vx > 0) player.vx -= 0.1;
+        
 
         // Speed limits!
-        if (player.vx > 8)
-            player.vx = 8;
-        else if (player.vx < -8)
-            player.vx = -8;
+        // if (player.vx > 8)
+        //     player.vx = 8;
+        // else if (player.vx < -8)
+        //     player.vx = -8;
 
         //Jump the player when it hits the base
-        if ((player.y + player.height) > base.y && base.y < height) player.jump();
+        if ((player.y + player.height) > base.y && base.y < height)
+            player.jump();
 
         //Gameover if it hits the bottom
-        if (base.y > height && (player.y + player.height) > height && player.isDead != "lol") player.isDead = true;
+        if (base.y > height && (player.y + player.height) > height && player.isDead != "inFirstTry")
+            player.isDead = true;
 
         //Make the player move through walls
         if (player.x > width) player.x = 0 - player.width;
@@ -404,7 +362,8 @@ function init() {
             s.x = p.x + p.width / 2 - s.width / 2;
             s.y = p.y - p.height - 10;
 
-            if (s.y > height / 1.1) s.state = 0;
+            if (s.y > height / 1.1)
+                s.state = 0;
 
             s.draw();
         } else {
@@ -413,15 +372,14 @@ function init() {
         }
     }
 
-    //Platform's horizontal movement (and falling) algo
-
+    // Platform's horizontal movement and falling algorithm
     function platformCalc() {
         var subs = platform_broken_substitute;
 
         platforms.forEach(function(p, i) {
             if (p.type == 2) {
-                if (p.x < 0 || p.x + p.width > width) p.vx *= -1;
-
+                if (p.x < 0 || p.x + p.width > width)
+                    p.vx *= -1;
                 p.x += p.vx;
             }
 
@@ -429,7 +387,6 @@ function init() {
                 subs.x = p.x;
                 subs.y = p.y;
                 subs.appearance = true;
-
                 jumpCount++;
             }
 
@@ -441,13 +398,16 @@ function init() {
             subs.y += 8;
         }
 
-        if (subs.y > height) subs.appearance = false;
+        if (subs.y > height)
+            subs.appearance = false;
     }
 
     function collides() {
-        //Platforms
+        
         platforms.forEach(function(p, i) {
-            if (player.vy > 0 && p.state === 0 && (player.x + 15 < p.x + p.width) && (player.x + player.width - 15 > p.x) && (player.y + player.height > p.y) && (player.y + player.height < p.y + p.height)) {
+            if (player.vy > 0 && p.state === 0 && 
+                (player.x + 15 < p.x + p.width) && (player.x + player.width - 15 > p.x) &&
+                (player.y + player.height > p.y) && (player.y + player.height < p.y + p.height)) {
 
                 if (p.type == 3 && p.flag === 0) {
                     previous_collision = i;
@@ -469,14 +429,15 @@ function init() {
             }
         });
 
-        //Springs
+        // Springs
         var s = Spring;
-        if (player.vy > 0 && (s.state === 0) && (player.x + 15 < s.x + s.width) && (player.x + player.width - 15 > s.x) && (player.y + player.height > s.y) && (player.y + player.height < s.y + s.height)) {
+        if (player.vy > 0 && (s.state === 0) &&
+            (player.x + 15 < s.x + s.width) && (player.x + player.width - 15 > s.x) && 
+            (player.y + player.height > s.y) && (player.y + player.height < s.y + s.height)) {
             s.state = 1;
             previous_collision = 0;
             player.jumpHigh();
         }
-
     }
 
     function updateScore() {
@@ -499,24 +460,21 @@ function init() {
         else if (player.y + player.height > height) {
             showGoMenu();
             hideScore();
-            player.isDead = "lol";
-
+            player.isDead = "inFirstTry";
         }
     }
 
     //Function to update everything
-
     function update() {
         paintCanvas();
+        // Calculations
         platformCalc();
-
         springCalc();
-
         playerCalc();
-        player.draw();
-
+        // Drawing
         base.draw();
-
+        player.draw();
+        
         updateScore();
     }
 
@@ -524,7 +482,7 @@ function init() {
         return;
     };
     animloop = function() {
-        for (i = 0; i < gamespeed; i++)
+        for (i = 0; i < gameSpeed; i++)
             update();
         requestAnimFrame(animloop);
     };
@@ -532,98 +490,15 @@ function init() {
     animloop();
 
     hideMenu();
-    showScore();
+    if(draw_flag) showScore();
+    else hideScore();
 }
 
-scores = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-
-function reset() {
-    // record iteration and score for graphing library
-
-    scores[currentIteration % 11] = score;
-
-    average = (scores[0] + scores[1] + scores[2] + scores[3] + scores[4] + scores[5] + scores[6] + scores[7] + scores[8] + scores[9]) / 10;
-    //sorted = scores.sort(function(a,b){return a-b;});
-    //console.log(sorted);
-    //median = sorted[5];
-    //max = sorted[10];
-    //if (currentIteration % 20 == 0) {
-          ScorePerLifeChartDPS.push({
-            x: currentIteration,
-            y: average
-        });
-        Chart2DPS.push({
-            x: currentIteration,
-            y: brain.explored
-        });
-        updateChart();
-        if(saveStore) store.set('brain', brain);
-
-    //}
-    //hideGoMenu();
-    showScore();
-    player.isDead = false;
-
-    flag = 0;
-    position = 0;
-    score = base_score;
-    baseHeight = 0;
-    currentIteration++;
-
-
-    base = new Base();
-    player = new Player();
-    Spring = new spring();
-    platform_broken_substitute = new Platform_broken_substitute();
-
-    platforms = [];
-    for (var i = 0; i < platformCount; i++) {
-        platforms.push(new Platform());
-    }
-
-    // player.x = platforms[0].x;
-    // player.y = platforms[0].y;
-}
-
-//Hides the menu
-function hideMenu() {
-    var menu = document.getElementById("mainMenu");
-    menu.style.zIndex = -1;
-}
-
-//Shows the game over menu
-function showGoMenu() {
-    var menu = document.getElementById("gameOverMenu");
-    menu.style.zIndex = 1;
-    menu.style.visibility = "visible";
-
-    var scoreText = document.getElementById("go_score");
-    scoreText.innerHTML = "You scored " + score + " points!";
-}
-
-//Show ScoreBoard
-function showScore() {
-    var menu = document.getElementById("scoreBoard");
-    menu.style.zIndex = 1;
-}
-
-//Hide ScoreBoard
-function hideScore() {
-    var menu = document.getElementById("scoreBoard");
-    menu.style.zIndex = -1;
-}
-
+// Jump the player and paint new position
 function playerJump() {
 
     player.y += player.vy;
     player.vy += gravity;
-
-    if (player.vy > 0 &&
-        (player.x + 15 < 260) &&
-        (player.x + player.width - 15 > 155) &&
-        (player.y + player.height > 475) &&
-        (player.y + player.height < 500))
-        player.jump();
 
     if (dir == "left") {
         player.dir = "left";
@@ -631,57 +506,6 @@ function playerJump() {
     } else if (dir == "right") {
         player.dir = "right";
         if (player.vy < -7 && player.vy > -15) player.dir = "right_land";
-    }
-
-    //Adding keyboard controls
-    // document.onkeydown = function(e) {
-    //     var key = e.keyCode;
-
-    //     if (key == 37) {
-    //         dir = "left";
-    //         player.isMovingLeft = true;
-    //     } else if (key == 39) {
-    //         dir = "right";
-    //         player.isMovingRight = true;
-    //     }
-
-    //     if (key == 32) {
-    //         if (firstRun === true) {
-    //             init();
-    //             firstRun = false;
-    //         } else
-    //             reset();
-    //     }
-    // };
-
-    // document.onkeyup = function(e) {
-    //     var key = e.keyCode;
-
-    //     if (key == 37) {
-    //         dir = "left";
-    //         player.isMovingLeft = false;
-    //     } else if (key == 39) {
-    //         dir = "right";
-    //         player.isMovingRight = false;
-    //     }
-
-    // };
-
-    //Accelerations produces when the user hold the keys
-    if (player.isMovingLeft === true) {
-        player.x += player.vx;
-        player.vx -= 0.15;
-    } else {
-        player.x += player.vx;
-        if (player.vx < 0) player.vx += 0.1;
-    }
-
-    if (player.isMovingRight === true) {
-        player.x += player.vx;
-        player.vx += 0.15;
-    } else {
-        player.x += player.vx;
-        if (player.vx > 0) player.vx -= 0.1;
     }
 
     //Jump the player when it hits the base
@@ -694,6 +518,81 @@ function playerJump() {
     player.draw();
 }
 
+
+// Reset game and start over
+function reset() {
+    // record iteration and score for graphing library
+    scores[currIter % 11] = score;
+
+    var sum = 0;
+    scores.forEach(function(scr){
+        sum += scr;
+    });
+    var avg = sum/scores.length;
+    //if (currIter % 10 == 0) {
+          ScorePerLifeChartDPS.push({
+            x: currIter,
+            y: avg
+        });
+        ExploredStatesDPS.push({
+            x: currIter,
+            y: brain.explored
+        });
+        renderCharts();
+        if(saveStore) store.set('brain', brain);
+    //}
+    // Reset game variables
+    player.isDead = false;
+    flag = 0;
+    position = 0;
+    score = base_score;
+    baseHeight = 0;
+    currIter++;
+
+    base = new Base();
+    player = new Player();
+    Spring = new spring();
+    platform_broken_substitute = new Platform_broken_substitute();
+
+    platforms = [];
+    for (var i = 0; i < platformCount; i++) {
+        platforms.push(new Platform());
+    }
+}
+
+/**
+ * Helper functions
+ */
+
+// Hides the menu
+function hideMenu() {
+    var menu = document.getElementById("mainMenu");
+    menu.style.zIndex = -1;
+}
+
+// Shows the game over menu
+function showGoMenu() {
+    var menu = document.getElementById("gameOverMenu");
+    menu.style.zIndex = 1;
+    menu.style.visibility = "visible";
+
+    var scoreText = document.getElementById("go_score");
+    scoreText.innerHTML = "You scored " + score + " points!";
+}
+
+// Show ScoreBoard
+function showScore() {
+    var menu = document.getElementById("scoreBoard");
+    menu.style.zIndex = 1;
+}
+
+// Hide ScoreBoard
+function hideScore() {
+    var menu = document.getElementById("scoreBoard");
+    menu.style.zIndex = -1;
+}
+
+// Update canvas
 function update() {
     ctx.clearRect(0, 0, width, height);
     playerJump();
@@ -706,24 +605,26 @@ menuLoop = function() {
 
 menuLoop();
 
-
 window.onbeforeunload = function (event) {
-    //save the master brain to disk before exiting
-    
+    //save the master brain to localStorage before exiting
     if(saveStore) store.set('brain', brain);
 
-    var message = 'Are you sure you wish to stop running this algorithm?';
-    if (typeof event == 'undefined') {
+    if (typeof event == 'undefined') 
       event = window.event;
-    }
-    if (event) {
-      event.returnValue = message;
-    }
-    return message;
-
+    else if (event) 
+      event.returnValue = "";
+    return;
 };
 
+// Saves current brain
 function saveBrain(){
     store.set('brain', brain);
-    console.log("Brained stored");
+    console.log("Brained stored with "+brain.explored+" explored states");
+}
+
+// Toogle drawing of the game
+function toggleDraw(){
+    draw_flag = !draw_flag;
+    if(!draw_flag) hideScore();
+    else showScore();
 }

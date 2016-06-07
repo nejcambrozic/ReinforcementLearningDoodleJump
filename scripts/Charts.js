@@ -1,54 +1,57 @@
-var ScorePerLifeChartDPS = [];
-var Chart3DPS            = [];
-var Chart2DPS            = [];
-var ScorePerLifeChart;
-var Chart2;
-var Chart3;
+// Define charts variables
+var ScorePerLifeChartDPS = [],
+  ExploredStatesDPS = [],
+  ScorePerLifeChart,
+  ExploredStatesChart;
+
+// Render charts
+var renderCharts = function() {
+  ScorePerLifeChart.render();
+  ExploredStatesChart.render();
+};
 
 window.onload = function () {
 
+  CanvasJS.addColorSet("BtsSuccess", ["#5cb85c"]);
+  CanvasJS.addColorSet("BtsPrimary", ["#428bca"]);
   ScorePerLifeChart = new CanvasJS.Chart("chartScorePerLifeContainer",
-  {
-    title:{
-      text: "Rezultat - št. iger"
-    },
-    axisX: {
-      title: "lifes"
-    },
-    axisY: {
-      title: "Score"
-    },
-    data: [{
-      type: "line",
-      dataPoints: ScorePerLifeChartDPS
-    }]
-  });
+    {
+      title:{
+        text: ""
+      },
+      axisX: {
+        title: "Number of Games"
+      },
+      axisY: {
+        title: "Score"
+      },
+      data: [{
+        type: "line",
+        dataPoints: ScorePerLifeChartDPS
+      }],
+      colorSet: "BtsSuccess"
+    }
+  );
 
-  Chart2 = new CanvasJS.Chart("chart2",
-  {
-    title:{
-      text: "Raziskana stanja -št. iger"
-    },
-    axisX: {
-      title: "lifes"
-    },
-    axisY: {
-      title: "Explored states"
-    },
-    data: [{
-      type: "line",
-      dataPoints: Chart2DPS
-    }]
-  });
-
-
-  ScorePerLifeChart.render();
-  Chart2.render();
-
+  ExploredStatesChart = new CanvasJS.Chart("ExploredStatesChartContainer",
+    {
+      title:{
+        text: ""
+      },
+      axisX: {
+        title: "Number of Games"
+      },
+      axisY: {
+        title: "Explored states"
+      },
+      data: [{ 
+        type: "line",
+        dataPoints: ExploredStatesDPS
+      }],
+      colorSet: "BtsPrimary"
+    }
+  );
+  // Render charts
+  renderCharts();
 }
 
-var updateChart = function() {
-  ScorePerLifeChart.render();
-  Chart2.render();
-
-};

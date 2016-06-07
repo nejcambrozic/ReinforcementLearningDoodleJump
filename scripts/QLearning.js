@@ -1,11 +1,23 @@
+const ydivision = 10, // round the y distance to the nearest ydivision
+    xdivision = 40;
 
-var Q_model = function() {
+var previous_score = 0,
+    previous_collision = -1,
+    target_platform = -1,
+    base_score = 0,
+    states,
+    previous_player_height = 0,
+    scale_reward_pos = 1/75, // scale down reward because height difference is too high
+    scale_death,
+    previous_collision2 = -3;
+
+// Model for Q learning class
+var Qmodel = function() {
     this.actions = []; // the full set of actions
     this.explored = 0; // how many states have been explored
     this.last_state = [0, 0]; // the last state predicted
     this.learning_rate = 1;
-    this.random = 1;
-
+    
     this.predict = function(state) {
         this.last_state = state;
         i = state[0]; // type of platform
@@ -49,59 +61,25 @@ var Q_model = function() {
         if(this.actions[i][j][k] == 0 && positive)
             this.actions[i][j][k] -= 1; 
     }; 
+};
 
-}
+var brain = new Qmodel();
 
-var brain = new Q_model();
-
-//autoload brain from localstorage
+// Load brain from localstorage
 // if(store.has('brain')) {
 //   var storedBrain = store.get('brain');
 //   brain.actions = storedBrain.actions;
 //   brain.explored = storedBrain.explored;
-//   //brain.last_state = storedBrain.last_state;
-//   console.log('Brain has been loaded');
-//   console.log('States explored:' + brain.explored);
+//   console.log('Brain retrivied. States explored:' + brain.explored);
 // }
 
-const ydivision = 1, // round the y distance to the nearest ydivision
-    xdivision = 1;
-var previous_score = 0;
-var previous_collision = -1; // how does this happen sometimes // the genie did it se c LLEOMLME L OLA DLOL OLOLOLOL
-
-var target_platform = -2;
-var base_score = 0;
-
-function get_states() {
-    state = [];
-    platforms.forEach(function(p) {
-        var pp = (1 * (p.state || (p.type == 3)) + 2 * (p.type == 2));
-        state.push([pp,
-                    Math.round((p.y - player.y) / ydivision) * ydivision,
-                    Math.abs(Math.round( (p.x - player.x) / xdivision))*xdivision]);
-    });
-    return state;
-}
-
-// Control gamespped
-function setGamespeed(val){
-  gamespeed = val;
-  document.getElementById("gamespeedVal").value = val;
-  document.getElementById("gamespeed").value = val;
-}
-
-var states;
-var previous_player_height = 0;
-var scale_reward_pos = 1/75; // scale down reward because height difference is too high
-var scale_death;
-var previous_collision2 = -3;
-
+// Give rewards + decide where to next
 function decide() {
     // Give reward for curren state
     if (target_platform >= 0 && previous_collision >= 0 ) {
         if (player.isDead) {
         	let scale_death = 1 + score/2000;
-            brain.reward(-100*scale_death);
+            brain.reward(-100/*scale_death*/);
             reset();
         }else{
             if(previous_collision != target_platform){
@@ -116,39 +94,57 @@ function decide() {
         }
     }
 
-    // predict next action
+    // predict for  next action
     previous_score = score;
     states = get_states();
-    predictions = [];
+    
     maxRewardIdx = 0;
-    for (st = 0; st < states.length; st++) {
-            predictions[st] = brain.predict(states[st]);
-            platforms[st].reward = predictions[st];
-            if(predictions[st] > predictions[maxRewardIdx])
-            	maxRewardIdx = st;
-            
-    }
+    var maxReward = -999999;
+    states.forEach(function(st, index){
+        platforms[index].reward = brain.predict(st);
+        if(platforms[index].reward > maxReward){
+            maxReward = platforms[index].reward;
+            maxRewardIdx = index;
+        }
+    });
+
     target_platform = maxRewardIdx;
 
-    brain.predict(states[target_platform]);
-    platforms.forEach(function(p, index) { p.target = 0; });
-    platforms[target_platform].target = 1;
 
-    
-    previous_player_height = player.height;
-    previous_collision2 = previous_collision;	
+    brain.predict(states[target_platform]);
+    platforms.forEach(function(p, index) {
+        index==target_platform? p.target= 1 : p.target = 0; 
+    });
+}
+
+// Returns current state
+function get_states() {
+    let state = [];
+    platforms.forEach(function(p) {
+        state.push([p.type,
+            Math.round((p.y - player.y) / ydivision) * ydivision,
+            Math.abs(Math.round( (p.x - player.x) / xdivision))*xdivision]);
+    });
+    return state;
+}
+
+// Control gamespped
+function setGamespeed(val){
+  gameSpeed = val;
+  document.getElementById("gamespeedVal").value = val;
+  document.getElementById("gamespeed").value = val;
 }
 
 // Determine the direction to move to get to platform p (left/right)
 function direction(n) {
     p = platforms[n];
-    dir = "none";
+    //dir = "none";
     try {
         if (p.x + 25< player.x)
-            dir = "left";
+            return "left";
         else if (player.x < p.x + 15)
-            dir = "right";
+            return "right";
     } catch (e) {}
-
-    return dir;
+    
+    return "none";
 }
